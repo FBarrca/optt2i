@@ -85,7 +85,11 @@ def build_qwen_image_lightning(
         except Exception:
             pass
 
-    # Attach a small helper for convenience
+    # --- Workaround helper for the Nunchuku bug on num_images_per_prompt != 1 ---
+    # Always call the pipeline with num_images_per_prompt=1, and if the caller asked
+    # for more, loop multiple runs to collect N images.
+    _warned_multi = {"done": False}
+
     def _generate(
         prompt: str,
         *,
@@ -93,17 +97,57 @@ def build_qwen_image_lightning(
         width: int = 1024,
         height: int = 1024,
         num_images_per_prompt: int = 1,
+        seed: Optional[int] = None,
     ) -> List[Any]:
-        out = pipe(
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            width=width,
-            height=height,
-            num_inference_steps=num_inference_steps,
-            true_cfg_scale=true_cfg_scale,
-            num_images_per_prompt=num_images_per_prompt,
+        """
+        Generate images with a defensive workaround:
+        - Forces the underlying call to num_images_per_prompt=1 to avoid crashes.
+        - If num_images_per_prompt > 1 was requested, runs the pipeline multiple times.
+        - Optional `seed` enables deterministic results; per-image seed is (seed + i).
+        """
+        import torch
+
+        # How many images the caller *wants*
+        requested = int(num_images_per_prompt or 1)
+        if requested < 1:
+            requested = 1
+
+        # Let the user know (once) we're using the multi-run fallback.
+        if requested > 1 and not _warned_multi["done"]:
+            print(
+                "[nunchaku workaround] Multi-image requested; forcing num_images_per_prompt=1 "
+                "and looping per image to avoid the known crash."
+            )
+            _warned_multi["done"] = True
+
+        # Pick the device the pipeline will actually use
+        exec_device = getattr(
+            pipe, "_execution_device",
+            torch.device("cuda" if torch.cuda.is_available() else "cpu")
         )
-        return out.images
+
+        images: List[Any] = []
+        for i in range(requested):
+            gen = None
+            if seed is not None:
+                gen = torch.Generator(device=exec_device).manual_seed(int(seed) + i)
+
+            # Always pass num_images_per_prompt=1 to avoid the crash
+            out = pipe(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                width=width,
+                height=height,
+                num_inference_steps=num_inference_steps,
+                true_cfg_scale=true_cfg_scale,
+                num_images_per_prompt=1,
+                generator=gen,
+            )
+            # `out.images` is a list; we take the first (and only) image per run
+            if getattr(out, "images", None):
+                images.append(out.images[0])
+
+        return images
 
     # Expose a consistent method if users want to call via factory
     setattr(pipe, "generate", _generate)
@@ -117,7 +161,7 @@ __all__ = ["build_qwen_image_lightning"]
 if __name__ == "__main__":
     # Test the Qwen Image Lightning pipeline
     print("Building Qwen Image Lightning pipeline...")
-    
+
     try:
         # Build the pipeline with default parameters
         pipe = build_qwen_image_lightning(
@@ -128,20 +172,22 @@ if __name__ == "__main__":
         )
         print("✓ Pipeline built successfully!")
         print(f"✓ Cache key: {pipe.cache_key}")
-        
+
         # Test image generation
-        print("\nGenerating test image...")
+        print("\nGenerating test images with multi-run fallback...")
         prompt = "A beautiful landscape with mountains and a lake at sunset"
-        
+
+        # Request 3 images; workaround will loop 3× with num_images_per_prompt=1 internally
         images = pipe.generate(
             prompt=prompt,
             width=1024,
             height=1024,
-            num_images_per_prompt=1
+            num_images_per_prompt=3,
+            seed=1234,  # optional; remove for non-deterministic
         )
-        
+
         print(f"✓ Generated {len(images)} image(s) successfully!")
-        
+
         # Save the first image if PIL is available
         try:
             if images:
@@ -149,9 +195,8 @@ if __name__ == "__main__":
                 print("✓ Test image saved as 'test_qwen_image_lightning.png'")
         except Exception as e:
             print(f"Note: Could not save image: {e}")
-            
+
     except Exception as e:
         print(f"✗ Error during testing: {e}")
         import traceback
         traceback.print_exc()
-
