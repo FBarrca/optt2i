@@ -67,6 +67,11 @@ def build_qwen_image_lightning(
     if resolved_dtype is None:
         raise ValueError(f"Unsupported torch_dtype: {torch_dtype}")
 
+    # check if the gpu is RTX 5000 series 
+    # https://nunchaku.tech/docs/nunchaku/usage/attention.html
+    if torch.cuda.get_device_name(0) == "RTX 5000":
+        transformer.set_attention_impl("nunchaku-fp16")  # set attention implementation to fp16
+
     pipe = QwenImagePipeline.from_pretrained(
         "Qwen/Qwen-Image", transformer=transformer, scheduler=scheduler, torch_dtype=resolved_dtype
     )
