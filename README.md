@@ -3,11 +3,12 @@
 Original paper: https://arxiv.org/abs/2403.17804
 
 ```mermaid
+%%{init: {'theme': 'neutral', 'themeVariables': {'darkMode': false}, "flowchart" : { "curve" : "basis" } } }%%
 flowchart LR
     %% Nodes
     U[User prompt]
     C([Consistency Metric])
-    M[[Meta-prompt\nTask description +\nPrompt history]]
+    M[[**Meta-prompt**: Task description + Prompt history]]
     L[LLM]
     R[[Revised prompt]]
     T[T2I]
@@ -32,7 +33,10 @@ flowchart LR
     class L llm;
     class C metric;
     class R,G stack;
+
 ```
+
 # TOC
+
 - [OPT2I](#opt2i)
   - [t2i](./docs/t2i.md)
