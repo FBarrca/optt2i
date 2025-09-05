@@ -39,6 +39,7 @@ dependencies = [
 
 [project.scripts]
 optt2i = "optt2i.main:main"
+"optt2i.t2i" = "optt2i.t2i.generate:main"
 
 [build-system]
 requires = ["hatchling"]

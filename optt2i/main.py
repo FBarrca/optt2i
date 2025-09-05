@@ -1,7 +1,7 @@
-def main():
-    """Main entry point for the optt2i package."""
-    print("Hello from optt2i!")
+"""Thin wrapper to reuse the t2i.generate CLI."""
 
+from __future__ import annotations
 
-if __name__ == "__main__":
-    main()
+from .t2i.generate import main
+
+__all__ = ["main"]
