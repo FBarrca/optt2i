@@ -10,4 +10,3 @@ def register_defaults() -> None:
 
 
 __all__ = ["register_defaults"]
-

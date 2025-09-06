@@ -28,6 +28,7 @@ def build_diffusers_pipeline(
     # Resolve dtype lazily to avoid importing torch unless needed
     if torch_dtype is not None:
         import torch as _torch
+
         dtype_map = {
             "float16": _torch.float16,
             "fp16": _torch.float16,
@@ -60,7 +61,9 @@ def build_diffusers_pipeline(
                     vram_gb = 0
                     if _torch.cuda.is_available():
                         idx = _torch.cuda.current_device()
-                        vram_gb = _torch.cuda.get_device_properties(idx).total_memory / (1024 ** 3)
+                        vram_gb = _torch.cuda.get_device_properties(
+                            idx
+                        ).total_memory / (1024**3)
                     if vram_gb and vram_gb < 20:
                         pipe.enable_model_cpu_offload()
                 except Exception:

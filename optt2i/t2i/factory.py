@@ -45,7 +45,9 @@ def clear_cache(key: Optional[str] = None) -> None:
         _CACHE.pop(key, None)
 
 
-def create_model(name: str, *, key: Optional[str] = None, refresh: bool = False, **kwargs: Any) -> Any:
+def create_model(
+    name: str, *, key: Optional[str] = None, refresh: bool = False, **kwargs: Any
+) -> Any:
     """Create (or fetch from cache) a t2i model by name.
 
     - name: Registered builder name.
@@ -54,7 +56,9 @@ def create_model(name: str, *, key: Optional[str] = None, refresh: bool = False,
     - kwargs: Passed to the registered builder.
     """
     if name not in _REGISTRY:
-        raise KeyError(f"Model '{name}' is not registered. Registered: {list_registered()}")
+        raise KeyError(
+            f"Model '{name}' is not registered. Registered: {list_registered()}"
+        )
 
     cache_key = key or name
     if not refresh and cache_key in _CACHE:
@@ -74,4 +78,3 @@ __all__ = [
     "clear_cache",
     "create_model",
 ]
-

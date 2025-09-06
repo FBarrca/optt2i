@@ -67,13 +67,18 @@ def build_qwen_image_lightning(
     if resolved_dtype is None:
         raise ValueError(f"Unsupported torch_dtype: {torch_dtype}")
 
-    # check if the gpu is RTX 5000 series 
+    # check if the gpu is RTX 5000 series
     # https://nunchaku.tech/docs/nunchaku/usage/attention.html
     if torch.cuda.get_device_name(0) == "RTX 5000":
-        transformer.set_attention_impl("nunchaku-fp16")  # set attention implementation to fp16
+        transformer.set_attention_impl(
+            "nunchaku-fp16"
+        )  # set attention implementation to fp16
 
     pipe = QwenImagePipeline.from_pretrained(
-        "Qwen/Qwen-Image", transformer=transformer, scheduler=scheduler, torch_dtype=resolved_dtype
+        "Qwen/Qwen-Image",
+        transformer=transformer,
+        scheduler=scheduler,
+        torch_dtype=resolved_dtype,
     )
 
     # Offload heuristics matching the example
@@ -127,8 +132,9 @@ def build_qwen_image_lightning(
 
         # Pick the device the pipeline will actually use
         exec_device = getattr(
-            pipe, "_execution_device",
-            torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            pipe,
+            "_execution_device",
+            torch.device("cuda" if torch.cuda.is_available() else "cpu"),
         )
 
         images: List[Any] = []
@@ -156,7 +162,11 @@ def build_qwen_image_lightning(
 
     # Expose a consistent method if users want to call via factory
     setattr(pipe, "generate", _generate)
-    setattr(pipe, "cache_key", f"qwen_image_lightning_steps{num_inference_steps}_r{rank}_{precision}")
+    setattr(
+        pipe,
+        "cache_key",
+        f"qwen_image_lightning_steps{num_inference_steps}_r{rank}_{precision}",
+    )
     return pipe
 
 
@@ -170,10 +180,7 @@ if __name__ == "__main__":
     try:
         # Build the pipeline with default parameters
         pipe = build_qwen_image_lightning(
-            num_inference_steps=4,
-            rank=32,
-            true_cfg_scale=1.0,
-            torch_dtype="bfloat16"
+            num_inference_steps=4, rank=32, true_cfg_scale=1.0, torch_dtype="bfloat16"
         )
         print("✓ Pipeline built successfully!")
         print(f"✓ Cache key: {pipe.cache_key}")
@@ -204,4 +211,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"✗ Error during testing: {e}")
         import traceback
+
         traceback.print_exc()

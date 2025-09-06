@@ -15,27 +15,56 @@ from . import create_model, list_registered, list_cached
 
 
 def _add_common_args(p: argparse.ArgumentParser) -> None:
-    p.add_argument("--builder", default="qwen_image_lightning", help="Registered builder name to use")
-    p.add_argument("--key", default=None, help="Optional cache key (defaults to builder name)")
-    p.add_argument("--refresh", action="store_true", help="Force re-create the model instance")
-    p.add_argument("--list", action="store_true", help="List registered and cached models, then exit")
-    p.add_argument("--prompt", default=None, help="Prompt to generate an image. If not set, only builds the model")
+    p.add_argument(
+        "--builder",
+        default="qwen_image_lightning",
+        help="Registered builder name to use",
+    )
+    p.add_argument(
+        "--key", default=None, help="Optional cache key (defaults to builder name)"
+    )
+    p.add_argument(
+        "--refresh", action="store_true", help="Force re-create the model instance"
+    )
+    p.add_argument(
+        "--list",
+        action="store_true",
+        help="List registered and cached models, then exit",
+    )
+    p.add_argument(
+        "--prompt",
+        default=None,
+        help="Prompt to generate an image. If not set, only builds the model",
+    )
     p.add_argument("--negative-prompt", default=None, help="Negative prompt (optional)")
     p.add_argument("--width", type=int, default=1024, help="Generation width")
     p.add_argument("--height", type=int, default=1024, help="Generation height")
-    p.add_argument("--num-images-per-prompt", type=int, default=1, help="Number of images to generate")
+    p.add_argument(
+        "--num-images-per-prompt",
+        type=int,
+        default=1,
+        help="Number of images to generate",
+    )
     p.add_argument(
         "--num-inference-steps",
         type=int,
         default=None,
         help="Optional per-call inference steps (used by many diffusers pipelines)",
     )
-    p.add_argument("--out", default="output.png", help="Output image path (or prefix when multiple images)")
+    p.add_argument(
+        "--out",
+        default="output.png",
+        help="Output image path (or prefix when multiple images)",
+    )
 
 
 def _add_qwen_args(p: argparse.ArgumentParser) -> None:
-    p.add_argument("--steps", type=int, default=4, help="Qwen-Image Lightning steps (4 or 8)")
-    p.add_argument("--rank", type=int, default=32, help="Nunchaku rank (e.g., 32 or 128)")
+    p.add_argument(
+        "--steps", type=int, default=4, help="Qwen-Image Lightning steps (4 or 8)"
+    )
+    p.add_argument(
+        "--rank", type=int, default=32, help="Nunchaku rank (e.g., 32 or 128)"
+    )
     p.add_argument("--true-cfg-scale", type=float, default=1.0, help="True CFG scale")
     p.add_argument(
         "--qwen-torch-dtype",
@@ -60,7 +89,9 @@ def _add_diffusers_args(p: argparse.ArgumentParser) -> None:
         default=None,
         help="Torch dtype for diffusers (e.g., float16, bfloat16). If omitted, library default is used.",
     )
-    p.add_argument("--device", default=None, help="Device to move pipeline to (e.g., cuda, cpu)")
+    p.add_argument(
+        "--device", default=None, help="Device to move pipeline to (e.g., cuda, cpu)"
+    )
     p.add_argument(
         "--enable-offload",
         default="auto",
@@ -130,7 +161,9 @@ def _save_images(images: List[Any], out_path: str) -> List[str]:
 
 
 def main(argv: List[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(description="optt2i.t2i: text-to-image generation CLI")
+    parser = argparse.ArgumentParser(
+        description="optt2i.t2i: text-to-image generation CLI"
+    )
     _add_common_args(parser)
     _add_qwen_args(parser)
     _add_diffusers_args(parser)
@@ -152,7 +185,9 @@ def main(argv: List[str] | None = None) -> None:
     model = create_model(args.builder, key=args.key, refresh=args.refresh, **kwargs)
 
     cache_key = getattr(model, "cache_key", args.key or args.builder)
-    print(f"Model ready: builder='{args.builder}', cache_key='{cache_key}', type={type(model).__name__}")
+    print(
+        f"Model ready: builder='{args.builder}', cache_key='{cache_key}', type={type(model).__name__}"
+    )
 
     if not args.prompt:
         return
@@ -177,4 +212,3 @@ def main(argv: List[str] | None = None) -> None:
 
 if __name__ == "__main__":
     main()
-
