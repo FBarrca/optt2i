@@ -40,3 +40,4 @@ flowchart LR
 
 - [OPT2I](#opt2i)
   - [t2i](./docs/t2i.md)
+  - [ranker](./docs/ranker.md)
